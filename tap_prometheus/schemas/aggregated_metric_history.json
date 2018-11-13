@@ -1,0 +1,33 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "date": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "metric": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "aggregation": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "value": {
+      "type": [
+        "null",
+        "number"
+      ]
+    }
+  }
+}
