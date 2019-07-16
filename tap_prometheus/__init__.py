@@ -141,15 +141,13 @@ def query_metric(client, name, query, aggregation, period, step):
                 end=iterator_unixtime + period_seconds,
                 step=step
             )  # returns PrometheusData object
+            # TODO hande empty array
             ts = ts_data.timeseries[0]  # returns a TimeSeries object
 
             dataframe = ts.as_pandas_dataframe()
             dataframe['values'] = dataframe['values'].astype(float)
 
-            if aggregation == 'max':
-                aggregated_value = dataframe.max()['values']
-            else:
-                raise Exception("Aggregation method not implemented: " + aggregation)
+            aggregated_value = aggregate(aggregation, dataframe)
 
             # print(" " + str(bookmark_unixtime) + " "+ str(aggregated_value))
             data = {
@@ -182,6 +180,18 @@ def query_metric(client, name, query, aggregation, period, step):
             iterator_unixtime += period_seconds
 
     singer.write_state(Context.state)
+
+
+def aggregate(aggregation, dataframe):
+    if aggregation == 'max':
+        aggregated_value = dataframe.max()['values']
+    elif aggregation == 'min':
+        aggregated_value = dataframe.min()['values']
+    elif aggregation == 'avg':
+        aggregated_value = dataframe.mean()['values']
+    else:
+        raise Exception("Aggregation method not implemented: " + aggregation)
+    return aggregated_value
 
 
 def get_bookmark(name):

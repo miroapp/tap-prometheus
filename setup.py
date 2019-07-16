@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='tap-prometheus',
-      version='0.0.1',
+      version='0.0.2',
       description='Singer.io tap for extracting data from the Prometheus API',
       author='JustEdro',
       url='https://github.com/JustEdro',
