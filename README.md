@@ -13,7 +13,7 @@ Sample config to calculate daily online peak:
     {
         "name": "online_peak",
         "query": "sum(sessions_count)",
-        "aggregation": "max",
+        "aggregations": ["max"],
         "period": "day",
         "step": 120
     }
@@ -22,7 +22,7 @@ Sample config to calculate daily online peak:
 ```
 * step: metrics resolution, see 
 
-Only day long periods and only "max" aggregation is supported now. 
+Only day long periods and only "max", "min", "avg" aggregations are supported now. 
 
 Several source code parts copied from: 
 * tap-stripe: https://github.com/singer-io/tap-stripe

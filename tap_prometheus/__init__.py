@@ -106,17 +106,21 @@ def sync(client):
     for metric in Context.config['metrics']:
         name = metric['name']
         query = metric['query']
-        aggregation = metric['aggregation']
+        aggregations = []
+        if 'aggregations' in metric:
+            aggregations = metric['aggregations']
+        if 'aggregation' in metric:
+            aggregations = [metric['aggregation']]
         period = metric['period']
         step = metric['step']
 
         LOGGER.info('Loading metric "%s" using query "%s", aggregation: %s, period: %s, metric step: %d seconds',
-                    name, query, aggregation, period, step)
+                    name, query, aggregations, period, step)
 
-        query_metric(client, name, query, aggregation, period, step)
+        query_metric(client, name, query, aggregations, period, step)
 
 
-def query_metric(client, name, query, aggregation, period, step):
+def query_metric(client, name, query, aggregations, period, step):
     stream_name = 'aggregated_metric_history'
     catalog_entry = Context.get_catalog_entry(stream_name)
     stream_schema = catalog_entry['schema']
@@ -147,24 +151,25 @@ def query_metric(client, name, query, aggregation, period, step):
             dataframe = ts.as_pandas_dataframe()
             dataframe['values'] = dataframe['values'].astype(float)
 
-            aggregated_value = aggregate(aggregation, dataframe)
+            for aggregation in aggregations:
+                aggregated_value = aggregate(aggregation, dataframe)
 
-            # print(" " + str(bookmark_unixtime) + " "+ str(aggregated_value))
-            data = {
-                "date": iterator_unixtime,
-                "metric": name,
-                "aggregation": aggregation,
-                "value": aggregated_value
-            }
-            rec = transformer.transform(data, stream_schema)
+                # print(" " + str(bookmark_unixtime) + " "+ str(aggregated_value))
+                data = {
+                    "date": iterator_unixtime,
+                    "metric": name,
+                    "aggregation": aggregation,
+                    "value": aggregated_value
+                }
+                rec = transformer.transform(data, stream_schema)
 
-            singer.write_record(
-                stream_name,
-                rec,
-                time_extracted=extraction_time
-            )
+                singer.write_record(
+                    stream_name,
+                    rec,
+                    time_extracted=extraction_time
+                )
 
-            Context.new_counts[stream_name] += 1
+                Context.new_counts[stream_name] += 1
 
             singer.write_bookmark(
                 Context.state,
