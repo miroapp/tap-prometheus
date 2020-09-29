@@ -145,31 +145,35 @@ def query_metric(client, name, query, aggregations, period, step):
                 end=iterator_unixtime + period_seconds,
                 step=step
             )  # returns PrometheusData object
-            # TODO hande empty array
-            ts = ts_data.timeseries[0]  # returns a TimeSeries object
 
-            dataframe = ts.as_pandas_dataframe()
-            dataframe['values'] = dataframe['values'].astype(float)
+            if len(ts_data.timeseries) > 0:
+                ts = ts_data.timeseries[0]  # returns a TimeSeries object
 
-            for aggregation in aggregations:
-                aggregated_value = aggregate(aggregation, dataframe)
+                dataframe = ts.as_pandas_dataframe()
+                dataframe['values'] = dataframe['values'].astype(float)
 
-                # print(" " + str(bookmark_unixtime) + " "+ str(aggregated_value))
-                data = {
-                    "date": iterator_unixtime,
-                    "metric": name,
-                    "aggregation": aggregation,
-                    "value": aggregated_value
-                }
-                rec = transformer.transform(data, stream_schema)
+                for aggregation in aggregations:
+                    aggregated_value = aggregate(aggregation, dataframe)
 
-                singer.write_record(
-                    stream_name,
-                    rec,
-                    time_extracted=extraction_time
-                )
+                    # print(" " + str(bookmark_unixtime) + " "+ str(aggregated_value))
+                    data = {
+                        "date": iterator_unixtime,
+                        "metric": name,
+                        "aggregation": aggregation,
+                        "value": aggregated_value
+                    }
+                    rec = transformer.transform(data, stream_schema)
 
-                Context.new_counts[stream_name] += 1
+                    singer.write_record(
+                        stream_name,
+                        rec,
+                        time_extracted=extraction_time
+                    )
+
+                    Context.new_counts[stream_name] += 1
+
+            else:
+                LOGGER.warn('Request %s returned an empty result for the date %s', query, iterator_unixtime)
 
             singer.write_bookmark(
                 Context.state,
